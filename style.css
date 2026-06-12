@@ -80,7 +80,7 @@ canvas {
 
 .skill-button {
   position: absolute;
-  right: 14px;
+  left: 14px;
   bottom: 14px;
   width: 68px;
   height: 68px;
@@ -98,7 +98,7 @@ canvas {
 
 .joystick {
   position: absolute;
-  left: 16px;
+  right: 16px;
   bottom: 16px;
   width: 104px;
   height: 104px;
@@ -263,14 +263,14 @@ h2 {
   }
 
   .joystick {
-    left: 14px;
+    right: 14px;
     bottom: 18px;
     width: 112px;
     height: 112px;
   }
 
   .skill-button {
-    right: 18px;
+    left: 18px;
     bottom: 22px;
     width: 74px;
     height: 74px;
