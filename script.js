@@ -12,6 +12,8 @@ const characterGrid = document.getElementById("characterGrid");
 const startButton = document.getElementById("startButton");
 const restartButton = document.getElementById("restartButton");
 const skillButton = document.getElementById("skillButton");
+const joystick = document.getElementById("joystick");
+const joystickKnob = document.getElementById("joystickKnob");
 
 const KOREA_DEX = "https://data1.pokemonkorea.co.kr/newdata/pokedex/mid/";
 const OFFICIAL_ARTWORK = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/";
@@ -216,6 +218,12 @@ const itemTypes = [
 
 const imageCache = new Map();
 const keys = new Set();
+const joystickState = {
+  active: false,
+  pointerId: null,
+  x: 0,
+  y: 0,
+};
 let selectedIndex = 0;
 let state = "ready";
 let score = 0;
@@ -307,6 +315,7 @@ function renderCharacterSelect() {
 }
 
 function startGame() {
+  resetJoystick();
   player.data = players[selectedIndex];
   player.hp = player.data.hp;
   player.size = 58;
@@ -392,6 +401,7 @@ function checkEnding(now) {
 }
 
 function startEnding(now) {
+  resetJoystick();
   state = "ending";
   endingStartedAt = now;
   flashUntil = now + 1200;
@@ -428,6 +438,8 @@ function movePlayer(now, d) {
   if (keys.has("ArrowRight") || keys.has("KeyD")) dx += 1;
   if (keys.has("ArrowUp") || keys.has("KeyW")) dy -= 1;
   if (keys.has("ArrowDown") || keys.has("KeyS")) dy += 1;
+  dx += joystickState.x;
+  dy += joystickState.y;
   const len = Math.hypot(dx, dy) || 1;
   const speedMul = speedBuffUntil > now ? 1.35 : 1;
   player.x += (dx / len) * player.data.speed * speedMul * d;
@@ -724,6 +736,7 @@ function damagePlayer(now) {
 }
 
 function endGame() {
+  resetJoystick();
   state = "gameover";
   finalScore.textContent = `${score}점`;
   finalStage.textContent = `도달 스테이지 ${stage}`;
@@ -1494,17 +1507,54 @@ window.addEventListener("keydown", (event) => {
 
 window.addEventListener("keyup", (event) => keys.delete(event.code));
 
-canvas.addEventListener("pointermove", (event) => {
+function updateJoystick(event) {
+  const rect = joystick.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const max = rect.width * 0.34;
+  const rawX = event.clientX - centerX;
+  const rawY = event.clientY - centerY;
+  const len = Math.hypot(rawX, rawY);
+  const limited = Math.min(max, len || 0);
+  const nx = len ? rawX / len : 0;
+  const ny = len ? rawY / len : 0;
+  const knobX = nx * limited;
+  const knobY = ny * limited;
+
+  joystickState.x = Math.abs(knobX) < 5 ? 0 : knobX / max;
+  joystickState.y = Math.abs(knobY) < 5 ? 0 : knobY / max;
+  joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+}
+
+function resetJoystick() {
+  joystickState.active = false;
+  joystickState.pointerId = null;
+  joystickState.x = 0;
+  joystickState.y = 0;
+  joystickKnob.style.transform = "translate(-50%, -50%)";
+}
+
+joystick.addEventListener("pointerdown", (event) => {
   if (state !== "playing") return;
-  const rect = canvas.getBoundingClientRect();
-  player.x = ((event.clientX - rect.left) / rect.width) * canvas.width;
-  player.y = ((event.clientY - rect.top) / rect.height) * canvas.height;
+  event.preventDefault();
+  joystickState.active = true;
+  joystickState.pointerId = event.pointerId;
+  joystick.setPointerCapture(event.pointerId);
+  updateJoystick(event);
 });
 
-canvas.addEventListener("pointerdown", (event) => {
-  if (state === "playing") {
-    canvas.setPointerCapture(event.pointerId);
-  }
+joystick.addEventListener("pointermove", (event) => {
+  if (!joystickState.active || joystickState.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  updateJoystick(event);
+});
+
+joystick.addEventListener("pointerup", (event) => {
+  if (joystickState.pointerId === event.pointerId) resetJoystick();
+});
+
+joystick.addEventListener("pointercancel", (event) => {
+  if (joystickState.pointerId === event.pointerId) resetJoystick();
 });
 
 startButton.addEventListener("click", startGame);
