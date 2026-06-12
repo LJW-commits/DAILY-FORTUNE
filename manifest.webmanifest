@@ -1,0 +1,19 @@
+{
+  "name": "포코피아 플라이트",
+  "short_name": "포코피아",
+  "description": "가족과 함께 즐기는 세로형 슈팅 게임",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9f8ff",
+  "theme_color": "#2f9e7e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
